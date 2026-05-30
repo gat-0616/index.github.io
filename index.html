@@ -116,6 +116,58 @@
 
     .empty { text-align: center; color: #bbb; font-size: 14px; padding: 30px 0; }
 
+    /* Fitness sub tabs */
+    .sub-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+    .sub-tabs button {
+      flex: 1; border: none; background: #f0f0f0; border-radius: 8px;
+      padding: 10px 0; font-size: 14px; font-weight: 500;
+      color: #888; cursor: pointer; transition: all .2s;
+    }
+    .sub-tabs button.active { background: #4A90D9; color: #fff; }
+    .sub-content { display: none; }
+    .sub-content.active { display: block; }
+
+    /* Body part selector */
+    .bp-selector {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px;
+    }
+    .bp-selector button {
+      border: 1px solid #ddd; background: #fff; border-radius: 8px;
+      padding: 8px 14px; font-size: 13px; cursor: pointer; color: #555;
+      transition: all .2s;
+    }
+    .bp-selector button.active {
+      background: #4A90D9; color: #fff; border-color: #4A90D9;
+    }
+
+    .bp-header { margin-bottom: 12px; }
+    .bp-header h3 { font-size: 17px; margin-bottom: 6px; }
+    .bp-desc {
+      font-size: 13px; color: #666; line-height: 1.7;
+      padding: 12px; background: #f9f9f9; border-radius: 8px; margin-bottom: 12px;
+    }
+    .bp-desc strong { color: #333; }
+
+    .bv-item {
+      display: flex; gap: 12px; padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0; align-items: flex-start;
+    }
+    .bv-item:last-child { border-bottom: none; }
+    .bv-thumb {
+      width: 120px; height: 68px; border-radius: 8px; overflow: hidden;
+      flex-shrink: 0; background: #eee;
+    }
+    .bv-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .bv-info { flex: 1; min-width: 0; }
+    .bv-info h4 { font-size: 14px; margin-bottom: 3px; }
+    .bv-info h4 a { color: #333; text-decoration: none; }
+    .bv-info h4 a:hover { color: #4A90D9; }
+    .bv-info .meta { font-size: 12px; color: #999; }
+
     .footer {
       text-align: center; font-size: 12px; color: #ccc; margin-top: 20px;
     }
@@ -138,16 +190,16 @@
     </div>
 
     <div class="tabs" id="tabs">
-      <button class="active" data-tab="todo">待办</button>
-      <button data-tab="fitness">健身</button>
+      <button class="active" data-tab="todo">📋 待办</button>
+      <button data-tab="fitness">🏋️ 健身</button>
     </div>
 
     <div class="section active" id="section-todo">
       <div class="card">
         <div class="card-title">📋 待办清单</div>
         <div class="todo-input-wrap">
-          <input type="text" id="todoInput" placeholder="输入待办事项...">
-          <button class="btn" id="addTodoBtn">添加</button>
+          <input type="text" id="todoInput" placeholder="✏️ 输入待办事项...">
+          <button class="btn" id="addTodoBtn">➕ 添加</button>
         </div>
         <div id="todoList"></div>
         <div class="todo-stats" id="todoStats"></div>
@@ -155,19 +207,34 @@
     </div>
 
     <div class="section" id="section-fitness">
-      <div class="card">
-        <div class="card-title">🏋️ 健身计划</div>
-        <div class="fitness-form">
-          <input type="text" id="fitTitle" placeholder="标题（如：胸肌训练）">
-          <input type="url" id="fitUrl" placeholder="链接（可选）：https://...">
-          <textarea id="fitNote" placeholder="备注（动作、组数、心得等）"></textarea>
-          <button class="btn" id="addFitBtn">保存</button>
+      <div class="sub-tabs" id="fitSubTabs">
+        <button class="active" data-sub="plan">📋 计划</button>
+        <button data-sub="video">🎬 视频</button>
+      </div>
+
+      <div class="sub-content active" id="sub-plan">
+        <div class="card">
+          <div class="card-title">🏋️ 健身计划</div>
+          <div class="fitness-form">
+            <input type="text" id="fitTitle" placeholder="🏷️ 标题（如：胸肌训练）">
+            <input type="url" id="fitUrl" placeholder="🔗 链接（可选）：https://...">
+            <textarea id="fitNote" placeholder="📝 备注（动作、组数、心得等）"></textarea>
+            <button class="btn" id="addFitBtn">💾 保存</button>
+          </div>
+          <div id="fitList"></div>
         </div>
-        <div id="fitList"></div>
+      </div>
+
+      <div class="sub-content" id="sub-video">
+        <div class="card">
+          <div class="card-title">🎬 健身视频</div>
+          <div class="bp-selector" id="bpSelector"></div>
+          <div id="bpContent"></div>
+        </div>
       </div>
     </div>
 
-    <div class="footer">数据保存在服务器</div>
+    <div class="footer">💾 数据保存在服务器</div>
   </div>
 
   <script src="config.js"></script>
@@ -191,24 +258,24 @@
       fetch(API_BASE + '/todos')
         .then(r => r.json())
         .then(renderTodos)
-        .catch(() => toast('加载待办失败'))
+        .catch(() => toast('⚠️ 加载待办失败'))
     }
 
     function renderTodos(todos) {
       const list = document.getElementById('todoList')
       if (todos.length === 0) {
-        list.innerHTML = '<div class="empty">还没有待办事项</div>'
+        list.innerHTML = '<div class="empty">📭 还没有待办事项</div>'
       } else {
         list.innerHTML = todos.map(t => `
           <div class="todo-item">
             <input type="checkbox" ${t.done ? 'checked' : ''} data-id="${t.id}">
-            <span class="text ${t.done ? 'done' : ''}">${escapeHtml(t.text)}</span>
-            <button class="del-btn" data-id="${t.id}">✕</button>
+            <span class="text ${t.done ? 'done' : ''}">${t.done ? '✅' : '⬜'} ${escapeHtml(t.text)}</span>
+            <button class="del-btn" data-id="${t.id}">🗑️</button>
           </div>
         `).join('')
       }
       const done = todos.filter(t => t.done).length
-      document.getElementById('todoStats').textContent = `${done}/${todos.length} 已完成`
+      document.getElementById('todoStats').textContent = `✅ ${done}/${todos.length} 已完成`
     }
 
     document.getElementById('addTodoBtn').addEventListener('click', () => {
@@ -257,14 +324,14 @@
     function renderFitness(fitness) {
       const list = document.getElementById('fitList')
       if (fitness.length === 0) {
-        list.innerHTML = '<div class="empty">还没有健身计划</div>'
+        list.innerHTML = '<div class="empty">🏋️ 还没有健身计划</div>'
       } else {
         list.innerHTML = fitness.map(f => `
           <div class="fit-item">
-            <h4>${f.url ? `<a href="${escapeHtml(f.url)}" target="_blank">${escapeHtml(f.title)}</a>` : escapeHtml(f.title)}</h4>
+            <h4>🏋️ ${f.url ? `<a href="${escapeHtml(f.url)}" target="_blank">${escapeHtml(f.title)}</a>` : escapeHtml(f.title)}</h4>
             ${f.note ? `<p>${escapeHtml(f.note)}</p>` : ''}
-            <div class="meta">${escapeHtml(f.date)}</div>
-            <div class="actions"><button data-id="${f.id}">删除</button></div>
+            <div class="meta">📅 ${escapeHtml(f.date)}</div>
+            <div class="actions"><button data-id="${f.id}">🗑️ 删除</button></div>
           </div>
         `).join('')
       }
@@ -296,6 +363,130 @@
           .catch(() => toast('删除失败'))
       }
     })
+
+    // === Fitness sub tabs ===
+    document.getElementById('fitSubTabs').addEventListener('click', e => {
+      if (e.target.tagName !== 'BUTTON') return
+      document.querySelectorAll('#fitSubTabs button').forEach(b => b.classList.remove('active'))
+      e.target.classList.add('active')
+      document.querySelectorAll('.sub-content').forEach(s => s.classList.remove('active'))
+      document.getElementById('sub-' + e.target.dataset.sub).classList.add('active')
+    })
+
+    // === Fitness Videos ===
+    const bodyParts = [{
+      id: 'chest',
+      name: '💪 胸肌',
+      desc: '胸肌由<strong>胸大肌</strong>和<strong>胸小肌</strong>组成，是上半身力量的标志。饱满的胸肌能让你穿衣更有型。',
+      tips: ['杠铃/哑铃卧推（平板、上斜）：整体增厚胸肌', '哑铃飞鸟：拉伸胸肌，增加宽度', '龙门架夹胸：雕刻中缝线条', '双杠臂屈伸：侧重下胸', '每组 8-12 次，共 4 组，循序渐进加重'],
+      videos: [
+        { title: '胸肌训练最佳训练方式，增加胸肌饱满度', url: 'https://www.youtube.com/watch?v=FAzN6uhQCdc', channel: '身体升级', views: '5.8K' },
+        { title: '专练胸大肌｜227万播放', url: 'https://www.bilibili.com/video/BV15DZzYsEG4/', channel: 'Z贤者', views: '227万' },
+        { title: '克里斯CBum泵感十足胸部训练', url: 'https://www.bilibili.com/video/BV1RQz3B9E3e/', channel: '泵感星球PumpLab', views: '78.6万' }
+      ]
+    }, {
+      id: 'back',
+      name: '🔙 背部',
+      desc: '背部由<strong>背阔肌</strong>、<strong>斜方肌</strong>和<strong>竖脊肌</strong>组成。宽厚的背部是倒三角身材的关键，也能改善体态、预防圆肩驼背。',
+      tips: ['引体向上（宽握）：扩展背阔肌宽度', '杠铃划船：增加背部厚度', '高位下拉：塑造V字背', '单臂哑铃划船：矫正左右不对称', '坐姿划船：针对中背和菱形肌'],
+      videos: [
+        { title: 'The PERFECT Back Workout (2025) — 80万播放', url: 'https://www.youtube.com/watch?v=fX36liNtKzw', channel: 'ATHLEAN-X™', views: '80.9万' },
+        { title: 'ULTIMATE BACK workout — Build BIG & THICK Back', url: 'https://www.youtube.com/watch?v=hq8rVgBh7eg', channel: 'Obi Vincent', views: '1.2万' },
+        { title: 'Back & Bicep Workout ft. Eric Janicki', url: 'https://www.youtube.com/watch?v=iJWiCL8ID_8', channel: 'Mike Thurston Coaching', views: '8万' }
+      ]
+    }, {
+      id: 'legs',
+      name: '🦵 腿部',
+      desc: '腿部包含<strong>股四头肌</strong>、<strong>腘绳肌</strong>、<strong>臀肌</strong>和<strong>小腿肌群</strong>。练腿能促进全身睾酮分泌，是增肌的发动机。',
+      tips: ['杠铃深蹲：王牌动作，全面刺激腿部', '罗马尼亚硬拉：针对腘绳肌和臀部', '腿举机：大重量孤立练腿', '保加利亚分腿蹲：改善平衡和臀线', '提踵：强化小腿线条'],
+      videos: [
+        { title: 'The Best 45-Min Leg Workout — 480万播放', url: 'https://www.youtube.com/watch?v=RQNfBQbcbIo', channel: 'Jeff Nippard', views: '480万' },
+        { title: 'PERFECT Leg Workout (Backed by Science) — 88万', url: 'https://www.youtube.com/watch?v=QXtXEug0PLU', channel: 'ATHLEAN-X™', views: '88.6万' },
+        { title: 'Best Scientific Leg Workout 2025 — 1730万', url: 'https://www.youtube.com/shorts/jf9PBwwNAMs', channel: 'Jeff Nippard', views: '1730万' }
+      ]
+    }, {
+      id: 'shoulders',
+      name: '🏋️ 肩部',
+      desc: '肩部（三角肌）分为<strong>前束</strong>、<strong>中束</strong>和<strong>后束</strong>。宽阔的肩膀是"衣架子"身材的核心，能显著提升上半身视觉宽度。',
+      tips: ['杠铃/哑铃推举：整体肩部力量基础', '哑铃侧平举：针对中束，加宽肩膀', '前平举：针对前束', '面拉：针对后束，改善圆肩', '反向蝴蝶机飞鸟：孤立后束'],
+      videos: [
+        { title: 'PERFECT Shoulder Workout (2025) — 63万播放', url: 'https://www.youtube.com/watch?v=zEf4pKoKc70', channel: 'ATHLEAN-X™', views: '63.4万' },
+        { title: 'Building Broad Shoulders with Charles Glass', url: 'https://www.youtube.com/watch?v=KYUEm9_lYJo', channel: 'GET CUT WITH GLASS', views: '4.2K' },
+        { title: 'Stop Destroying Your Shoulders – Train Delts Right', url: 'https://www.youtube.com/watch?v=5KvQaYgqhNc', channel: 'GET CUT WITH GLASS', views: '1.9K' }
+      ]
+    }, {
+      id: 'arms',
+      name: '💪 手臂',
+      desc: '手臂主要是<strong>肱二头肌</strong>（前侧）和<strong>肱三头肌</strong>（后侧，占手臂2/3）。粗壮的手臂是力量最直接的视觉体现。',
+      tips: ['杠铃弯举/哑铃弯举：针对肱二头肌', '窄距卧推：针对肱三头肌', '绳索下压：孤立三头肌外侧头', '锤式弯举：增加前臂维度', '双杠臂屈伸：同时练三头和下胸'],
+      videos: [
+        { title: '40 Minute All Out Arms AMRAP — 5.4万播放', url: 'https://www.youtube.com/watch?v=k2VXZ3LDtGk', channel: 'Sydney Cummings', views: '5.4万' },
+        { title: '30-Day Lean Toned Arms, Chest, Back & Abs', url: 'https://www.youtube.com/watch?v=YOwfX8pBnMA', channel: "Roberta's Gym", views: '1.2万' },
+        { title: '2026 Ultimate Workout — Arms, Abs, Legs, Fat Burn', url: 'https://www.youtube.com/watch?v=26OQjMhYUxI', channel: 'Hailey C.', views: '11.7万' }
+      ]
+    }, {
+      id: 'abs',
+      name: '🔥 腹肌',
+      desc: '腹肌包括<strong>腹直肌</strong>（六块腹肌）、<strong>腹外斜肌</strong>（人鱼线）和<strong>腹横肌</strong>（深层核心）。腹肌不仅好看，更是保护腰椎的核心屏障。',
+      tips: ['卷腹/仰卧起坐：针对上腹', '举腿/反向卷腹：针对下腹', '俄罗斯转体/侧卷腹：针对腹斜肌', '平板支撑：核心稳定性训练', '注意：腹肌是厨房练出来的 — 体脂率低于15%才显形'],
+      videos: [
+        { title: 'Do THIS Everyday In 2026 For 6 PACK ABS — 87万播放', url: 'https://www.youtube.com/watch?v=BElgcWsChSs', channel: 'CHRIS HERIA', views: '87万' },
+        { title: '2026 Ultimate Workout — Hourglass, Abs, Arms', url: 'https://www.youtube.com/watch?v=26OQjMhYUxI', channel: 'Hailey C.', views: '11.7万' },
+        { title: '30-Day Lean Toned Arms, Chest, Back & Abs', url: 'https://www.youtube.com/watch?v=YOwfX8pBnMA', channel: "Roberta's Gym", views: '1.2万' }
+      ]
+    }]
+
+    let activeBp = 'chest'
+
+    function renderBpSelector() {
+      const el = document.getElementById('bpSelector')
+      el.innerHTML = bodyParts.map(bp =>
+        `<button class="${bp.id === activeBp ? 'active' : ''}" data-bp="${bp.id}">${bp.name}</button>`
+      ).join('')
+    }
+
+    function renderBpContent() {
+      const bp = bodyParts.find(b => b.id === activeBp)
+      if (!bp) return
+      const el = document.getElementById('bpContent')
+      el.innerHTML = `
+        <div class="bp-header"><h3>${bp.icon || ''} ${bp.name} 训练</h3></div>
+        <div class="bp-desc">${bp.desc}</div>
+        <div class="bp-desc" style="background:#f0f7ff">
+          <strong>📌 推荐训练动作：</strong><br>
+          ${bp.tips.map(t => '• ' + t).join('<br>')}
+        </div>
+        <div style="margin-top:12px;font-size:14px;font-weight:600;color:#555;">🎥 推荐视频</div>
+        ${bp.videos.map(v => `
+          <div class="bv-item">
+            <div class="bv-thumb">
+              <img src="https://img.youtube.com/vi/${getYoutubeId(v.url)}/mqdefault.jpg"
+                   alt="${escapeHtml(v.title)}" loading="lazy"
+                   onerror="this.parentElement.innerHTML='<div style=width:120px;height:68px;display:flex;align-items:center;justify-content:center;background:#ddd;font-size:24px;>🎬</div>'">
+            </div>
+            <div class="bv-info">
+              <h4><a href="${escapeHtml(v.url)}" target="_blank">${escapeHtml(v.title)}</a></h4>
+              <div class="meta">📺 ${escapeHtml(v.channel)} · 👁️ ${v.views}</div>
+            </div>
+          </div>
+        `).join('')}
+      `
+    }
+
+    function getYoutubeId(url) {
+      const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/)
+      return m ? m[1] : ''
+    }
+
+    document.getElementById('bpSelector').addEventListener('click', e => {
+      if (e.target.tagName !== 'BUTTON' || !e.target.dataset.bp) return
+      activeBp = e.target.dataset.bp
+      renderBpSelector()
+      renderBpContent()
+    })
+
+    renderBpSelector()
+    renderBpContent()
 
     // === Tabs ===
     document.getElementById('tabs').addEventListener('click', e => {
