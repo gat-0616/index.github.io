@@ -14,7 +14,6 @@
     }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
 
-    /* Header */
     .header {
       text-align: center;
       padding: 40px 20px 30px;
@@ -30,7 +29,6 @@
     .header h1 { font-size: 24px; font-weight: 600; }
     .header p { color: #888; font-size: 14px; margin-top: 4px; }
 
-    /* Tabs */
     .tabs {
       display: flex;
       background: #fff;
@@ -46,11 +44,9 @@
     }
     .tabs button.active { color: #4A90D9; box-shadow: inset 0 -2px 0 #4A90D9; }
 
-    /* Sections */
     .section { display: none; }
     .section.active { display: block; }
 
-    /* Card */
     .card {
       background: #fff;
       border-radius: 12px;
@@ -60,7 +56,6 @@
     }
     .card-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
 
-    /* Todo */
     .todo-input-wrap {
       display: flex; gap: 8px; margin-bottom: 12px;
     }
@@ -96,7 +91,6 @@
     }
     .todo-stats { font-size: 12px; color: #999; margin-top: 8px; text-align: right; }
 
-    /* Fitness */
     .fitness-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
     .fitness-form input, .fitness-form textarea {
       border: 1px solid #ddd; border-radius: 8px;
@@ -122,28 +116,32 @@
 
     .empty { text-align: center; color: #bbb; font-size: 14px; padding: 30px 0; }
 
-    /* Footer */
     .footer {
       text-align: center; font-size: 12px; color: #ccc; margin-top: 20px;
     }
+
+    .toast {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,.75); color: #fff; padding: 10px 24px;
+      border-radius: 8px; font-size: 14px; z-index: 999;
+      animation: fadeIn .3s;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Header -->
     <div class="header">
       <div class="avatar">😊</div>
-      <h1 id="userName">我的首页</h1>
-      <p id="userBio">记录生活，保持自律</p>
+      <h1>我的首页</h1>
+      <p>记录生活，保持自律</p>
     </div>
 
-    <!-- Tabs -->
     <div class="tabs" id="tabs">
       <button class="active" data-tab="todo">待办</button>
       <button data-tab="fitness">健身</button>
     </div>
 
-    <!-- Todo Section -->
     <div class="section active" id="section-todo">
       <div class="card">
         <div class="card-title">📋 待办清单</div>
@@ -156,7 +154,6 @@
       </div>
     </div>
 
-    <!-- Fitness Section -->
     <div class="section" id="section-fitness">
       <div class="card">
         <div class="card-title">🏋️ 健身计划</div>
@@ -170,127 +167,148 @@
       </div>
     </div>
 
-    <div class="footer">数据保存在浏览器本地</div>
+    <div class="footer">数据保存在服务器</div>
   </div>
 
+  <script src="config.js"></script>
   <script>
-    // === Todo ===
-    let todos = JSON.parse(localStorage.getItem('todos')) || [];
-
-    function saveTodos() {
-      localStorage.setItem('todos', JSON.stringify(todos));
-      renderTodos();
+    function toast(msg) {
+      const el = document.createElement('div')
+      el.className = 'toast'
+      el.textContent = msg
+      document.body.appendChild(el)
+      setTimeout(() => el.remove(), 2000)
     }
 
-    function renderTodos() {
-      const list = document.getElementById('todoList');
+    function escapeHtml(str) {
+      const div = document.createElement('div')
+      div.textContent = str
+      return div.innerHTML
+    }
+
+    // === Todo ===
+    function loadTodos() {
+      fetch(API_BASE + '/todos')
+        .then(r => r.json())
+        .then(renderTodos)
+        .catch(() => toast('加载待办失败'))
+    }
+
+    function renderTodos(todos) {
+      const list = document.getElementById('todoList')
       if (todos.length === 0) {
-        list.innerHTML = '<div class="empty">还没有待办事项</div>';
+        list.innerHTML = '<div class="empty">还没有待办事项</div>'
       } else {
-        list.innerHTML = todos.map((t, i) => `
+        list.innerHTML = todos.map(t => `
           <div class="todo-item">
-            <input type="checkbox" ${t.done ? 'checked' : ''} data-index="${i}">
+            <input type="checkbox" ${t.done ? 'checked' : ''} data-id="${t.id}">
             <span class="text ${t.done ? 'done' : ''}">${escapeHtml(t.text)}</span>
-            <button class="del-btn" data-index="${i}">✕</button>
+            <button class="del-btn" data-id="${t.id}">✕</button>
           </div>
-        `).join('');
+        `).join('')
       }
-      const done = todos.filter(t => t.done).length;
-      document.getElementById('todoStats').textContent = `${done}/${todos.length} 已完成`;
+      const done = todos.filter(t => t.done).length
+      document.getElementById('todoStats').textContent = `${done}/${todos.length} 已完成`
     }
 
     document.getElementById('addTodoBtn').addEventListener('click', () => {
-      const input = document.getElementById('todoInput');
-      const text = input.value.trim();
-      if (!text) return;
-      todos.push({ text, done: false });
-      input.value = '';
-      saveTodos();
-    });
+      const input = document.getElementById('todoInput')
+      const text = input.value.trim()
+      if (!text) return
+      fetch(API_BASE + '/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      }).then(r => {
+        if (r.ok) { input.value = ''; loadTodos() }
+        else { toast('添加失败') }
+      }).catch(() => toast('添加失败'))
+    })
 
     document.getElementById('todoInput').addEventListener('keydown', e => {
-      if (e.key === 'Enter') document.getElementById('addTodoBtn').click();
-    });
+      if (e.key === 'Enter') document.getElementById('addTodoBtn').click()
+    })
 
     document.getElementById('todoList').addEventListener('click', e => {
-      const index = e.target.dataset.index;
-      if (index === undefined) return;
+      const id = e.target.dataset.id
+      if (id === undefined) return
       if (e.target.classList.contains('del-btn')) {
-        todos.splice(+index, 1);
-        saveTodos();
+        fetch(API_BASE + '/todos/' + id, { method: 'DELETE' })
+          .then(r => { if (r.ok) loadTodos(); else toast('删除失败') })
+          .catch(() => toast('删除失败'))
       } else if (e.target.type === 'checkbox') {
-        todos[+index].done = e.target.checked;
-        saveTodos();
+        fetch(API_BASE + '/todos/' + id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ done: e.target.checked })
+        }).then(r => { if (!r.ok) toast('更新失败') })
+          .catch(() => toast('更新失败'))
       }
-    });
+    })
 
     // === Fitness ===
-    let fitness = JSON.parse(localStorage.getItem('fitness')) || [];
-
-    function saveFitness() {
-      localStorage.setItem('fitness', JSON.stringify(fitness));
-      renderFitness();
+    function loadFitness() {
+      fetch(API_BASE + '/fitness')
+        .then(r => r.json())
+        .then(renderFitness)
+        .catch(() => toast('加载健身计划失败'))
     }
 
-    function renderFitness() {
-      const list = document.getElementById('fitList');
+    function renderFitness(fitness) {
+      const list = document.getElementById('fitList')
       if (fitness.length === 0) {
-        list.innerHTML = '<div class="empty">还没有健身计划</div>';
+        list.innerHTML = '<div class="empty">还没有健身计划</div>'
       } else {
-        list.innerHTML = fitness.map((f, i) => `
+        list.innerHTML = fitness.map(f => `
           <div class="fit-item">
             <h4>${f.url ? `<a href="${escapeHtml(f.url)}" target="_blank">${escapeHtml(f.title)}</a>` : escapeHtml(f.title)}</h4>
             ${f.note ? `<p>${escapeHtml(f.note)}</p>` : ''}
-            <div class="meta">${f.date}</div>
-            <div class="actions"><button data-index="${i}">删除</button></div>
+            <div class="meta">${escapeHtml(f.date)}</div>
+            <div class="actions"><button data-id="${f.id}">删除</button></div>
           </div>
-        `).join('');
+        `).join('')
       }
     }
 
     document.getElementById('addFitBtn').addEventListener('click', () => {
-      const title = document.getElementById('fitTitle').value.trim();
-      const url = document.getElementById('fitUrl').value.trim();
-      const note = document.getElementById('fitNote').value.trim();
-      if (!title) return;
-      fitness.unshift({
-        title,
-        url,
-        note,
-        date: new Date().toLocaleDateString('zh-CN')
-      });
-      document.getElementById('fitTitle').value = '';
-      document.getElementById('fitUrl').value = '';
-      document.getElementById('fitNote').value = '';
-      saveFitness();
-    });
+      const title = document.getElementById('fitTitle').value.trim()
+      const url = document.getElementById('fitUrl').value.trim()
+      const note = document.getElementById('fitNote').value.trim()
+      if (!title) { toast('请输入标题'); return }
+      fetch(API_BASE + '/fitness', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, url, note })
+      }).then(r => {
+        if (r.ok) {
+          document.getElementById('fitTitle').value = ''
+          document.getElementById('fitUrl').value = ''
+          document.getElementById('fitNote').value = ''
+          loadFitness()
+        } else { toast('保存失败') }
+      }).catch(() => toast('保存失败'))
+    })
 
     document.getElementById('fitList').addEventListener('click', e => {
-      if (e.target.tagName === 'BUTTON' && e.target.dataset.index !== undefined) {
-        fitness.splice(+e.target.dataset.index, 1);
-        saveFitness();
+      if (e.target.tagName === 'BUTTON' && e.target.dataset.id !== undefined) {
+        fetch(API_BASE + '/fitness/' + e.target.dataset.id, { method: 'DELETE' })
+          .then(r => { if (r.ok) loadFitness(); else toast('删除失败') })
+          .catch(() => toast('删除失败'))
       }
-    });
+    })
 
     // === Tabs ===
     document.getElementById('tabs').addEventListener('click', e => {
-      if (e.target.tagName !== 'BUTTON') return;
-      document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-      document.getElementById('section-' + e.target.dataset.tab).classList.add('active');
-    });
-
-    // === Helpers ===
-    function escapeHtml(str) {
-      const div = document.createElement('div');
-      div.textContent = str;
-      return div.innerHTML;
-    }
+      if (e.target.tagName !== 'BUTTON') return
+      document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'))
+      e.target.classList.add('active')
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'))
+      document.getElementById('section-' + e.target.dataset.tab).classList.add('active')
+    })
 
     // Init
-    renderTodos();
-    renderFitness();
+    loadTodos()
+    loadFitness()
   </script>
 </body>
 </html>
