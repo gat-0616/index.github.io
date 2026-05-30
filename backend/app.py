@@ -2,11 +2,12 @@ import sqlite3
 import os
 from datetime import datetime
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 
 app = Flask(__name__)
 
-DB_DIR = os.environ.get('DB_DIR', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance'))
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DB_DIR = os.environ.get('DB_DIR', os.path.join(ROOT_DIR, 'backend', 'instance'))
 DB_PATH = os.path.join(DB_DIR, 'app.db')
 
 
@@ -46,6 +47,17 @@ def add_cors(resp):
     resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
     resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
     return resp
+
+
+# ---- Static files ----
+@app.route('/')
+def serve_index():
+    return send_from_directory(ROOT_DIR, 'index.html')
+
+
+@app.route('/<path:filename>')
+def serve_static(filename):
+    return send_from_directory(ROOT_DIR, filename)
 
 
 # ---- Todos ----

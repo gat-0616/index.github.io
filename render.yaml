@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: index-github-io
+    runtime: python
+    repo: https://github.com/gat-0616/index.github.io
+    plan: free
+    region: singapore
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: gunicorn backend.app:app
+    healthCheckPath: /
