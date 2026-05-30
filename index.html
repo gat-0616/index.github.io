@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>我的首页</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      padding-bottom: 80px;
+    }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+
+    /* Header */
+    .header {
+      text-align: center;
+      padding: 40px 20px 30px;
+    }
+    .avatar {
+      width: 80px; height: 80px;
+      background: #4A90D9;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 12px;
+      font-size: 36px; color: #fff;
+    }
+    .header h1 { font-size: 24px; font-weight: 600; }
+    .header p { color: #888; font-size: 14px; margin-top: 4px; }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .tabs button {
+      flex: 1; border: none; background: transparent;
+      padding: 14px 0; font-size: 15px; font-weight: 500;
+      color: #888; cursor: pointer; transition: all .2s;
+    }
+    .tabs button.active { color: #4A90D9; box-shadow: inset 0 -2px 0 #4A90D9; }
+
+    /* Sections */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* Card */
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .card-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+
+    /* Todo */
+    .todo-input-wrap {
+      display: flex; gap: 8px; margin-bottom: 12px;
+    }
+    .todo-input-wrap input {
+      flex: 1; border: 1px solid #ddd; border-radius: 8px;
+      padding: 10px 14px; font-size: 14px; outline: none;
+    }
+    .todo-input-wrap input:focus { border-color: #4A90D9; }
+    .btn {
+      border: none; background: #4A90D9; color: #fff;
+      padding: 10px 18px; border-radius: 8px; font-size: 14px;
+      cursor: pointer; white-space: nowrap;
+    }
+    .btn:active { opacity: .8; }
+    .btn-danger { background: #e74c3c; }
+    .btn-secondary { background: #95a5a6; }
+
+    .todo-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid #f0f0f0;
+    }
+    .todo-item:last-child { border-bottom: none; }
+    .todo-item input[type="checkbox"] {
+      width: 20px; height: 20px; accent-color: #4A90D9; flex-shrink: 0;
+    }
+    .todo-item .text {
+      flex: 1; font-size: 14px; word-break: break-all;
+    }
+    .todo-item .text.done { text-decoration: line-through; color: #bbb; }
+    .todo-item .del-btn {
+      background: none; border: none; color: #e74c3c;
+      font-size: 18px; cursor: pointer; padding: 0 4px;
+    }
+    .todo-stats { font-size: 12px; color: #999; margin-top: 8px; text-align: right; }
+
+    /* Fitness */
+    .fitness-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .fitness-form input, .fitness-form textarea {
+      border: 1px solid #ddd; border-radius: 8px;
+      padding: 10px 14px; font-size: 14px; outline: none; font-family: inherit;
+    }
+    .fitness-form input:focus, .fitness-form textarea:focus { border-color: #4A90D9; }
+    .fitness-form textarea { resize: vertical; min-height: 60px; }
+
+    .fit-item {
+      padding: 12px 0; border-bottom: 1px solid #f0f0f0;
+    }
+    .fit-item:last-child { border-bottom: none; }
+    .fit-item h4 { font-size: 15px; margin-bottom: 4px; }
+    .fit-item h4 a { color: #4A90D9; text-decoration: none; }
+    .fit-item h4 a:active { text-decoration: underline; }
+    .fit-item p { font-size: 13px; color: #666; margin-bottom: 4px; }
+    .fit-item .meta { font-size: 12px; color: #aaa; }
+    .fit-item .actions { margin-top: 6px; }
+    .fit-item .actions button {
+      background: none; border: none; color: #e74c3c;
+      font-size: 13px; cursor: pointer; padding: 2px 0;
+    }
+
+    .empty { text-align: center; color: #bbb; font-size: 14px; padding: 30px 0; }
+
+    /* Footer */
+    .footer {
+      text-align: center; font-size: 12px; color: #ccc; margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="avatar">😊</div>
+      <h1 id="userName">我的首页</h1>
+      <p id="userBio">记录生活，保持自律</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs" id="tabs">
+      <button class="active" data-tab="todo">待办</button>
+      <button data-tab="fitness">健身</button>
+    </div>
+
+    <!-- Todo Section -->
+    <div class="section active" id="section-todo">
+      <div class="card">
+        <div class="card-title">📋 待办清单</div>
+        <div class="todo-input-wrap">
+          <input type="text" id="todoInput" placeholder="输入待办事项...">
+          <button class="btn" id="addTodoBtn">添加</button>
+        </div>
+        <div id="todoList"></div>
+        <div class="todo-stats" id="todoStats"></div>
+      </div>
+    </div>
+
+    <!-- Fitness Section -->
+    <div class="section" id="section-fitness">
+      <div class="card">
+        <div class="card-title">🏋️ 健身计划</div>
+        <div class="fitness-form">
+          <input type="text" id="fitTitle" placeholder="标题（如：胸肌训练）">
+          <input type="url" id="fitUrl" placeholder="链接（可选）：https://...">
+          <textarea id="fitNote" placeholder="备注（动作、组数、心得等）"></textarea>
+          <button class="btn" id="addFitBtn">保存</button>
+        </div>
+        <div id="fitList"></div>
+      </div>
+    </div>
+
+    <div class="footer">数据保存在浏览器本地</div>
+  </div>
+
+  <script>
+    // === Todo ===
+    let todos = JSON.parse(localStorage.getItem('todos')) || [];
+
+    function saveTodos() {
+      localStorage.setItem('todos', JSON.stringify(todos));
+      renderTodos();
+    }
+
+    function renderTodos() {
+      const list = document.getElementById('todoList');
+      if (todos.length === 0) {
+        list.innerHTML = '<div class="empty">还没有待办事项</div>';
+      } else {
+        list.innerHTML = todos.map((t, i) => `
+          <div class="todo-item">
+            <input type="checkbox" ${t.done ? 'checked' : ''} data-index="${i}">
+            <span class="text ${t.done ? 'done' : ''}">${escapeHtml(t.text)}</span>
+            <button class="del-btn" data-index="${i}">✕</button>
+          </div>
+        `).join('');
+      }
+      const done = todos.filter(t => t.done).length;
+      document.getElementById('todoStats').textContent = `${done}/${todos.length} 已完成`;
+    }
+
+    document.getElementById('addTodoBtn').addEventListener('click', () => {
+      const input = document.getElementById('todoInput');
+      const text = input.value.trim();
+      if (!text) return;
+      todos.push({ text, done: false });
+      input.value = '';
+      saveTodos();
+    });
+
+    document.getElementById('todoInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('addTodoBtn').click();
+    });
+
+    document.getElementById('todoList').addEventListener('click', e => {
+      const index = e.target.dataset.index;
+      if (index === undefined) return;
+      if (e.target.classList.contains('del-btn')) {
+        todos.splice(+index, 1);
+        saveTodos();
+      } else if (e.target.type === 'checkbox') {
+        todos[+index].done = e.target.checked;
+        saveTodos();
+      }
+    });
+
+    // === Fitness ===
+    let fitness = JSON.parse(localStorage.getItem('fitness')) || [];
+
+    function saveFitness() {
+      localStorage.setItem('fitness', JSON.stringify(fitness));
+      renderFitness();
+    }
+
+    function renderFitness() {
+      const list = document.getElementById('fitList');
+      if (fitness.length === 0) {
+        list.innerHTML = '<div class="empty">还没有健身计划</div>';
+      } else {
+        list.innerHTML = fitness.map((f, i) => `
+          <div class="fit-item">
+            <h4>${f.url ? `<a href="${escapeHtml(f.url)}" target="_blank">${escapeHtml(f.title)}</a>` : escapeHtml(f.title)}</h4>
+            ${f.note ? `<p>${escapeHtml(f.note)}</p>` : ''}
+            <div class="meta">${f.date}</div>
+            <div class="actions"><button data-index="${i}">删除</button></div>
+          </div>
+        `).join('');
+      }
+    }
+
+    document.getElementById('addFitBtn').addEventListener('click', () => {
+      const title = document.getElementById('fitTitle').value.trim();
+      const url = document.getElementById('fitUrl').value.trim();
+      const note = document.getElementById('fitNote').value.trim();
+      if (!title) return;
+      fitness.unshift({
+        title,
+        url,
+        note,
+        date: new Date().toLocaleDateString('zh-CN')
+      });
+      document.getElementById('fitTitle').value = '';
+      document.getElementById('fitUrl').value = '';
+      document.getElementById('fitNote').value = '';
+      saveFitness();
+    });
+
+    document.getElementById('fitList').addEventListener('click', e => {
+      if (e.target.tagName === 'BUTTON' && e.target.dataset.index !== undefined) {
+        fitness.splice(+e.target.dataset.index, 1);
+        saveFitness();
+      }
+    });
+
+    // === Tabs ===
+    document.getElementById('tabs').addEventListener('click', e => {
+      if (e.target.tagName !== 'BUTTON') return;
+      document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById('section-' + e.target.dataset.tab).classList.add('active');
+    });
+
+    // === Helpers ===
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // Init
+    renderTodos();
+    renderFitness();
+  </script>
+</body>
+</html>
